@@ -16,10 +16,12 @@ Shortcuts:
 - Shift + Page Down : Go to next 'func'
 - Shift + Page Up : Go to previous 'func'
 
-- Ctrl + Enter : Add (:) colon at end and create new line below
+- Ctrl + Enter : Add (:) colon at end and create new line below (if needed)
 
-_Tip: Change the editor shortcut of `ui_text_newline_blank` to something else like `alt + enter` to create the newline without the colon._
-_This addon also fixes the autocomplete hint not disappearing when creating a new blank line._
+_Tip: You can turn `safe_colon` off inside the code to always add (:) colon instead of guessing.
+_Tip: If you do so, change the editor shortcut of `ui_text_newline_blank` to something else like `alt + enter` to create the newline without the colon._
+
+_Tip: This addon also fixes the autocomplete hint not disappearing when creating a new blank line._
 
 - Ctrl + Page Up : Go to the begining of current Block
 - Ctrl + Page Down : Go to end begining of current the Block

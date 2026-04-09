@@ -1,6 +1,7 @@
 @tool
 extends EditorPlugin
 
+var safe_colon : bool = true
 var shift_move_space: bool:
 	get:
 		return ProjectSettings.get_setting(SCRIPT_SHIFT_USAGE, false)
@@ -90,7 +91,9 @@ func _input(event: InputEvent) -> void:
 				#this_ev.alt_pressed = true
 				# Enter + Ctrl
 				if event.is_match(this_ev):
-					add_colon_jump_line(code_edit)
+					var text = code_edit.get_line(code_edit.get_caret_line())
+					if not safe_colon or _is_safe_colon(text):
+						add_colon_jump_line(code_edit)
 
 					var blank_line_ev := InputMap.action_get_events("ui_text_newline_blank")[0]
 					if not this_ev.is_match(blank_line_ev):
@@ -283,25 +286,6 @@ func _navigate_block_boundary_end(code_edit: CodeEdit) -> void:
 	code_edit.unfold_line(last_valid_line)
 	code_edit.set_caret_column(code_edit.get_line(last_valid_line).length())
 
-
-func _is_func_start(text: String) -> bool:
-	var s = text.strip_edges()
-	return s.begins_with("func ")
-
-func _is_block_start(text: String) -> bool:
-	var s = text.strip_edges()
-	return s.begins_with("if ") or s.begins_with("for ") or s.begins_with("func ") or s.begins_with("while ") or s.begins_with("elif ") or s.begins_with("else:")
-
-func _get_indent_level(text: String) -> int:
-	var count = 0
-	for c in text:
-		if c == "\t":
-			count += 1
-		elif c == " ":
-			continue
-		else:
-			break
-	return count
 #endregion
 
 #region /// Unindented Block Movement (Alt)
@@ -327,6 +311,32 @@ func navigate_next_block_start(code_edit : CodeEdit):
 
 func navigate_prev_block_start(code_edit : CodeEdit):
 	_navigate_to_block(code_edit, -1)
+#endregion
+
+#region /// Common
+func _is_func_start(text: String) -> bool:
+	var s = text.strip_edges()
+	return s.begins_with("func ")
+
+func _is_block_start(text: String) -> bool:
+	var s = text.strip_edges()
+	return s.begins_with("if ") or s.begins_with("for ") or s.begins_with("func ") or s.begins_with("while ") or s.begins_with("elif ") or s.begins_with("else:")
+
+func _is_safe_colon(text: String) -> bool:
+	var s = text.strip_edges()
+	if s.ends_with(":"): return false
+	if s.contains(" return") or s.contains(":return"): return false
+	return s.begins_with("if ") or s.begins_with("for ") or s.begins_with("func ") or s.begins_with("while ") or s.begins_with("elif ") or s.begins_with("else")
 
 
+func _get_indent_level(text: String) -> int:
+	var count = 0
+	for c in text:
+		if c == "\t":
+			count += 1
+		elif c == " ":
+			continue
+		else:
+			break
+	return count
 #endregion
