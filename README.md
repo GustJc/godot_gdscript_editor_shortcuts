@@ -18,8 +18,25 @@ Shortcuts:
 
 - Ctrl + Enter : Add (:) colon at end and create new line below
 
-Tip: Change the editor shortcut of `ui_text_newline_blank` to something else like `alt + enter` to create the newline without the colon.
-     This addon also fixes the autocomplete hint not disappearing when creating a new blank line.
+_Tip: Change the editor shortcut of `ui_text_newline_blank` to something else like `alt + enter` to create the newline without the colon._
+_This addon also fixes the autocomplete hint not disappearing when creating a new blank line._
+
+- Ctrl + Page Up : Go to the begining of current Block
+- Ctrl + Page Down : Go to end begining of current the Block
+
+_Tip: Using goto block if already at the begining/end goes to the next valid line outside it._
+
+- Alt + Page Up : Go to the begining of the Block (no matter the indent)
+- Alt + Page Down : Go to the begining of the Block (no matter the indent)
+
+Summary:
+
+- *No modifier* for empty line movement
+- *Shift* for FUNC movement
+- *Control* for indented block movement
+- *Alt* for unindented block movement
+
+_Tip: Can switch the shift/no modifier actions with Project Settings (see below)_
 
 # Configuration
 

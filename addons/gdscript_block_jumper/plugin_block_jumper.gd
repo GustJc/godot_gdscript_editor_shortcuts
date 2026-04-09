@@ -34,10 +34,20 @@ func _input(event: InputEvent) -> void:
 		if event.keycode == KEY_PAGEUP and event.pressed:
 			var code_edit: CodeEdit = EditorInterface.get_script_editor().get_current_editor().get_base_editor()
 			if code_edit.has_focus():
-				if event.shift_pressed:
+
+				if event.ctrl_pressed:
+					_navigate_block_boundary_start(code_edit)
+					get_viewport().set_input_as_handled()
+					return
+				elif event.alt_pressed:
+					navigate_prev_block_start(code_edit)
+					get_viewport().set_input_as_handled()
+					return
+
+				elif event.shift_pressed:
 					var shift_action := move_prev_empty_line if shift_move_space else move_prev_function
 					shift_action.call(code_edit)
-				else:
+				else: # No modifier
 					var normal_action := move_prev_function if shift_move_space else move_prev_empty_line
 					normal_action.call(code_edit)
 				get_viewport().set_input_as_handled()
@@ -46,10 +56,20 @@ func _input(event: InputEvent) -> void:
 		if event.keycode == KEY_PAGEDOWN and event.pressed:
 			var code_edit: CodeEdit = EditorInterface.get_script_editor().get_current_editor().get_base_editor()
 			if code_edit.has_focus():
-				if event.shift_pressed:
+
+				if event.ctrl_pressed:
+					_navigate_block_boundary_end(code_edit)
+					get_viewport().set_input_as_handled()
+					return
+				elif event.alt_pressed:
+					navigate_next_block_start(code_edit)
+					get_viewport().set_input_as_handled()
+					return
+
+				elif event.shift_pressed:
 					var shift_action := move_next_empty_line if shift_move_space else move_next_function
 					shift_action.call(code_edit)
-				else:
+				else: # No modifier
 					var normal_action := move_next_function if shift_move_space else move_next_empty_line
 					normal_action.call(code_edit)
 				get_viewport().set_input_as_handled()
@@ -68,7 +88,7 @@ func _input(event: InputEvent) -> void:
 				this_ev.keycode = KEY_ENTER
 				this_ev.ctrl_pressed = true
 				#this_ev.alt_pressed = true
-				# Enter + Ctrl + Alt (not shift)
+				# Enter + Ctrl
 				if event.is_match(this_ev):
 					add_colon_jump_line(code_edit)
 
@@ -78,7 +98,7 @@ func _input(event: InputEvent) -> void:
 						# Consume this input, since calling input key for newline
 						get_viewport().set_input_as_handled()
 
-
+#region /// Blank Colon Line (Ctrl + Enter)
 #  Manually trigger the 'newline_blank' action
 # # Did not work with InputAction #ev.action = "ui_text_newline_blank"
 # # Needs manual InputEventKey
@@ -105,8 +125,9 @@ func add_colon_jump_line(code_edit: CodeEdit) -> void:
 		# Set cursor to the end, so newline action can do its job
 		code_edit.set_caret_column(updated_text.length())
 	return
+#endregion
 
-
+#region /// Jump Empty Lines (no modifier) and Funcs (Shift)
 func move_prev_function(code_edit: CodeEdit) -> void:
 	var caret_line = code_edit.get_caret_line()
 	var text_lines = code_edit.text.split("\n")
@@ -117,6 +138,7 @@ func move_prev_function(code_edit: CodeEdit) -> void:
 		if line.begins_with("func "):
 			code_edit.set_caret_line(i)
 			code_edit.set_caret_column(line.length())
+			code_edit.unfold_line(i)
 			return
 
 
@@ -129,6 +151,7 @@ func move_next_function(code_edit: CodeEdit) -> void:
 		var line = text_lines[i].strip_edges()
 		if line.begins_with("func "):
 			code_edit.set_caret_line(i)
+			code_edit.unfold_line(i)
 			code_edit.set_caret_column(line.length())
 			return
 
@@ -149,6 +172,7 @@ func move_next_empty_line(code_edit: CodeEdit) -> void:
 				continue
 		if line.is_empty():
 			code_edit.set_caret_line(i)
+			code_edit.unfold_line(i)
 			code_edit.set_caret_column(line.length())
 			return
 
@@ -169,5 +193,140 @@ func move_prev_empty_line(code_edit: CodeEdit) -> void:
 				continue
 		if line.is_empty():
 			code_edit.set_caret_line(i)
+			code_edit.unfold_line(i)
 			code_edit.set_caret_column(line.length())
 			return
+#endregion
+
+#region /// Indented Block Boundary (Ctrl)
+func _navigate_block_boundary_start(code_edit: CodeEdit) -> void:
+	var reference_line = code_edit.get_caret_line()
+	while reference_line >= 0 and code_edit.get_line(reference_line).strip_edges() == "":
+		reference_line -= 1
+
+	# If the file is empty above the cursor, stop
+	if reference_line < 0: return
+
+	#var target_line = current_line - 1
+	var target_line = reference_line
+	var current_indent = _get_indent_level(code_edit.get_line(target_line))
+
+	while target_line >= 0:
+		var prev_text = code_edit.get_line(target_line)
+
+		if _is_func_start(prev_text):
+			if reference_line == target_line:
+				navigate_prev_block_start(code_edit)
+				return
+			code_edit.set_caret_line(target_line)
+			code_edit.unfold_line(target_line)
+			return
+
+		if _is_block_start(prev_text) and _get_indent_level(prev_text) < current_indent:
+			code_edit.set_caret_line(target_line)
+			code_edit.unfold_line(target_line)
+			return
+
+		target_line -= 1
+	pass
+
+
+func _navigate_block_boundary_end(code_edit: CodeEdit) -> void:
+	var current_line = code_edit.get_caret_line()
+	var total_lines = code_edit.get_line_count()
+
+	# Get "Reference Line" (first non-empty line at or above cursor)
+	var reference_line = current_line
+	while reference_line >= 0 and code_edit.get_line(reference_line).strip_edges() == "":
+		reference_line -= 1
+
+	if reference_line < 0: return
+
+	# Find the actual start of the current block to get the base indentation
+	var start_line = reference_line
+	var line_text = code_edit.get_line(start_line)
+	var base_indent = _get_indent_level(line_text)
+	# If not start, than remove indent to equal start block
+	if not _is_block_start(line_text):
+		base_indent -= 1
+	var last_valid_line = start_line
+
+	# Scan down to find the last line that is still indented further than base_indent
+	for i in range(start_line + 1, total_lines):
+		var check_text = code_edit.get_line(i)
+
+		# Skip trimmed empty lines
+		if check_text.strip_edges() == "":
+			continue
+		# Skip comments
+		if check_text.strip_edges().begins_with("#"):
+			continue
+
+		var check_indent = _get_indent_level(check_text)
+
+		if check_indent > base_indent:
+			last_valid_line = i
+		else:
+			# Line with same or less indent (end of block)
+			break
+
+	## Go to next valid code line if last line of block
+	if last_valid_line == current_line:
+		navigate_next_block_start(code_edit)
+		return
+		#for i in range(start_line + 1, total_lines):
+			#last_valid_line += 1
+			#if not code_edit.get_line(i).strip_edges() == "":
+				#break
+
+	code_edit.set_caret_line(last_valid_line)
+	code_edit.unfold_line(last_valid_line)
+	code_edit.set_caret_column(code_edit.get_line(last_valid_line).length())
+
+
+func _is_func_start(text: String) -> bool:
+	var s = text.strip_edges()
+	return s.begins_with("func ")
+
+func _is_block_start(text: String) -> bool:
+	var s = text.strip_edges()
+	return s.begins_with("if ") or s.begins_with("for ") or s.begins_with("func ") or s.begins_with("while ") or s.begins_with("elif ") or s.begins_with("else:")
+
+func _get_indent_level(text: String) -> int:
+	var count = 0
+	for c in text:
+		if c == "\t":
+			count += 1
+		elif c == " ":
+			continue
+		else:
+			break
+	return count
+#endregion
+
+#region /// Unindented Block Movement (Alt)
+## Increment +1 for next(down) and -1 for previous(up)
+func _navigate_to_block(code_edit : CodeEdit, increment : int = 1):
+	var current_line = code_edit.get_caret_line()
+	var line_text = code_edit.get_line(current_line)
+	var current_indent = _get_indent_level(line_text)
+
+	var target_line = current_line + increment
+	var total_lines = code_edit.get_line_count()
+
+	while target_line < total_lines:
+		var next_text = code_edit.get_line(target_line)
+		if _is_block_start(next_text):
+			code_edit.set_caret_line(target_line)
+			code_edit.unfold_line(target_line)
+			return
+		target_line += increment
+
+func navigate_next_block_start(code_edit : CodeEdit):
+	_navigate_to_block(code_edit)
+
+func navigate_prev_block_start(code_edit : CodeEdit):
+	_navigate_to_block(code_edit, -1)
+
+
+#endregion
