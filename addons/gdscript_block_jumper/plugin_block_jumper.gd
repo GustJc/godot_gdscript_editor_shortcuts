@@ -298,7 +298,7 @@ func _navigate_to_block(code_edit : CodeEdit, increment : int = 1):
 	var target_line = current_line + increment
 	var total_lines = code_edit.get_line_count()
 
-	while target_line < total_lines:
+	while target_line < total_lines and target_line >= 0:
 		var next_text = code_edit.get_line(target_line)
 		if _is_block_start(next_text):
 			code_edit.set_caret_line(target_line)
