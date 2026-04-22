@@ -1,42 +1,46 @@
-# Gdscript Space Block Jumper
+# Gdscript Editor shortcuts Addon
 
 Very simple plugin that let's you move around your code really fast with extra code shortcuts.
 
 ![](example_jumper.gif)
 
-Use *page-up* or *page-down* to jump to the next empty line.
+Use **page-up** or **page-down** to jump to the next empty line.  
+You can also **hold shift** to to jump to func definitions.
 
-You can also *hold shift* to to jump to func definitions.
+Initially inspired by PICO-8 script editor where you use the 'page up/down' keys to move across functions.
 
-Initially inspired by PICO-8 script editor where you use the 'page up/down' keys to move acress functions.
+Use **Ctrl+pageUpDn** to indentations blocks. (ifs/fors/funcs)  
+Use **Alt+pageUpDn** to navigate blocks. (ifs/fors/funcs)
 
-Shortcuts:
-- Page Down : Go to next empty line
-- Page Up : Go to previous empty line
-- Shift + Page Down : Go to next 'func'
-- Shift + Page Up : Go to previous 'func'
+## Shortcuts
+### Empty line & Func jumper
+- **Page Down** : Go to next empty line
+- **Page Up** : Go to previous empty line
+- **Shift + Page Down** : Go to next 'func'
+- **Shift + Page Up** : Go to previous 'func'
 
-- Ctrl + Enter : Add (:) colon at end and create new line below (if needed)
+### Auto complete colons
+- **Ctrl + Enter** : Add (:) colon at end and create new line below (if needed)
 
-_Tip: You can turn `safe_colon` off inside the code to always add (:) colon instead of guessing.
+_Tip: You can turn `safe_colon` off inside the code to always add (:) colon instead of guessing._
 _Tip: If you do so, change the editor shortcut of `ui_text_newline_blank` to something else like `alt + enter` to create the newline without the colon._
-
 _Tip: This addon also fixes the autocomplete hint not disappearing when creating a new blank line._
 
-- Ctrl + Page Up : Go to the begining of current Block
-- Ctrl + Page Down : Go to end begining of current the Block
+### Move between indents and blocks
+- **Ctrl + Page Up** : Go to the begining of current Block
+- **Ctrl + Page Down** : Go to end begining of current the Block
 
 _Tip: Using goto block if already at the begining/end goes to the next valid line outside it._
 
-- Alt + Page Up : Go to the begining of the Block (no matter the indent)
-- Alt + Page Down : Go to the begining of the Block (no matter the indent)
+- **Alt + Page Up** : Go to the begining of the Block (no matter the indent)
+- **Alt + Page Down** : Go to the begining of the Block (no matter the indent)
 
-Summary:
+## Summary
 
-- *No modifier* for empty line movement
-- *Shift* for FUNC movement
-- *Control* for indented block movement
-- *Alt* for unindented block movement
+- **No modifier** for empty line movement
+- **Shift** for FUNC movement
+- **Control** for indented block movement
+- **Alt** for unindented block movement
 
 _Tip: Can switch the shift/no modifier actions with Project Settings (see below)_
 
